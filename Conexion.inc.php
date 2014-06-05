@@ -1,4 +1,12 @@
 <?php
+/** 
+*
+* @CMS RHCreativo
+* @versión: 2.0.1      @modificado: 05 de Junio del 2014
+* @autor: Fede T.
+*
+*/
+
 if (strstr($_SERVER["SCRIPT_NAME"],"/Admin/")) {
   //error_reporting(E_ALL);
 
