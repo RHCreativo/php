@@ -1,0 +1,34 @@
+.gralNormal { font-family: Tahoma, Arial; font-size: 14px; font-style: normal; font-weight: normal; font-variant: normal }
+.gralTabla { font-family: Tahoma, Arial; font-size: 12px; font-style: normal; font-weight: normal; font-variant: normal }
+.gralChica { font-family: Tahoma, Arial; font-size: 9px; font-style: normal; font-weight: normal; font-variant: normal }
+
+.Verdana11 {  font-family: Verdana, Arial; font-size: 11px; font-style: normal; font-weight: bold}
+.Verdana09 { font-family: Verdana, Arial; font-size: 9px; font-style: normal; font-weight: normal }
+
+input.blanco {border-width:1px; background-color: #ffffff; font-family: Verdana, Arial; font-weight: bold; font-size: 9px; color: black;}
+
+a.columna:link    { text-decoration:none;color:black;background-color:transparent; font-family: Tahoma, Arial; font-size: 12px; font-style: normal; font-weight: normal; font-variant: normal }
+a.columna:visited { text-decoration:none;color:black;background-color:transparent; font-family: Tahoma, Arial; font-size: 12px; font-style: normal; font-weight: normal; font-variant: normal }
+a.columna:hover   { text-decoration:underline;color:#900B09;background-color:transparent; font-family: Tahoma, Arial; font-size: 12px; font-style: normal; font-weight: normal; font-variant: normal }
+a.columna:active  { text-decoration:underline;color:#900B09;background-color:transparent; font-family: Tahoma, Arial; font-size: 12px; font-style: normal; font-weight: normal; font-variant: normal }
+
+#hintbox{ /*CSS for pop up hint box */
+  position:absolute;
+  top: 0;
+  background-color: lightyellow;
+  width: 150px; /*Default width of hint.*/ 
+  padding: 3px;
+  border:1px solid black;
+  font:normal 11px Verdana;
+  line-height:18px;
+  z-index:100;
+  border-right: 3px solid black;
+  border-bottom: 3px solid black;
+  visibility: hidden;
+}
+
+.hintanchor{ /*CSS for link that shows hint onmouseover*/
+  font-weight: bold;
+  color: navy;
+  margin: 3px 8px;
+}
