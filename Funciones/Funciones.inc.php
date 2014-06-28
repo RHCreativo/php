@@ -1,4 +1,4 @@
-<?
+<?php
 
 $error_consulta = '
 	Disculpe las molestias, se ha producido un error inesperado. Si el problema persiste por favor reportelo a través de nuestro formulario de contacto.<br>
@@ -453,11 +453,16 @@ function fErrorSQL($cEstadoSitio, $cMensaje) {
   unset ($aExtra);
   $cExtra .= "=================================== \n" ;
 
+  /*
+  =======================================================================================
+   arreglar esto, que guarde en la DB 
+  =======================================================================================
   $cSql = "INSERT INTO sysErrores "
         . "  (ErrTexto, ErrExtra)"
         . "  VALUES "
         . "  ('".mysql_real_escape_string(strip_tags(str_replace("<br />", "\n", $cMensaje)))."', '".mysql_real_escape_string($cExtra)."')";
-  mysql_query ($cSql) or die("Error en la consulta: " . $cSql . " Tipo de error: " . mysql_error());
+  $nConexion->query ($cSql) or die("Error en la consulta: " . $cSql . " Tipo de error: " . mysqli_error($nConexion));
+  */
 
   if ($cEstadoSitio=="Production") {
     die();

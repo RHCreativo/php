@@ -1,10 +1,10 @@
-<?
+<?php
 /*
 ******************************************************************************
 * Administrador de Contenidos                                                *
 * -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-= *
 *                                                                            *
-* (C) 2002, Fabián Chesta                                                    *
+* (C) 2002, Federico Teiserskis                                              *
 *                                                                            *
 * Comentarios:                                                               *
 *                                                                            *
@@ -31,23 +31,27 @@ $cnfModulo = ((isset($_GET["Desde"]) and $_GET["Desde"]=="Relacion")?$_GET["Modu
 
 // Determina los permisos necesarios para las diferentes acciones
 $cSql = "SELECT ModTexto, ModInfoAdic, ModInfoRela, PerVer, PerEditar, PerAgregar, PerBorrar, PerAcciones, PerExportar, VerCntLineas FROM sysModulos LEFT JOIN sysModUsu ON sysModulos.ModNombre=sysModUsu.ModNombre WHERE sysModulos.ModNombre='" . $cnfModulo . "' AND sysModUsu.UsuAlias='" . $_SESSION["gbl".$conf["VariablesSESSION"]."Alias"] . "'";
-$nResultado = mysql_query ($cSql) or fErrorSQL($conf["EstadoSitio"], "<br /><br /><b>Error en la consulta:</b><br />" . $cSql . "<br /><br /><b>Tipo de error:</b><br />" . mysql_error() . "<br />");
-$aRegistro  = mysql_fetch_array($nResultado);
+$nResultado = $nConexion->query ($cSql) or fErrorSQL($conf["EstadoSitio"], "<br /><br /><b>Error en la consulta:</b><br />" . $cSql . "<br /><br /><b>Tipo de error:</b><br />" . mysqli_error($nConexion) . "<br />");
+$aRegistro  = $nResultado->fetch_object();
 
-$cnfModNombre   = $aRegistro["ModTexto"];
-$cnfModInfoAdic = $aRegistro["ModInfoAdic"];
-$cnfModInfoRela = $aRegistro["ModInfoRela"];
+$cnfModNombre   = $aRegistro->ModTexto;
+$cnfModInfoAdic = $aRegistro->ModInfoAdic;
+$cnfModInfoRela = $aRegistro->ModInfoRela;
 
-$cnfPerVer      = $aRegistro["PerVer"];
-$cnfPerAgregar  = $aRegistro["PerAgregar"];
-$cnfPerEditar   = $aRegistro["PerEditar"];
-$cnfPerBorrar   = $aRegistro["PerBorrar"];
-$cnfPerAcciones = $aRegistro["PerAcciones"];
-$cnfPerExportar = $aRegistro["PerExportar"];
+$cnfPerVer      = $aRegistro->PerVer;
+$cnfPerAgregar  = $aRegistro->PerAgregar;
+$cnfPerEditar   = $aRegistro->PerEditar;
+$cnfPerBorrar   = $aRegistro->PerBorrar;
+$cnfPerAcciones = $aRegistro->PerAcciones;
+$cnfPerExportar = $aRegistro->PerExportar;
 
-$cnfCntLineas   = $aRegistro["VerCntLineas"];
+$cnfCntLineas   = $aRegistro->VerCntLineas;
 
-mysql_free_result ($nResultado);
+// defino variables que llenaré en línea 140
+$cnfOrdExpr = '';
+$cnfOrdTipo = '';
+
+mysqli_free_result ($nResultado);
 
 
 // Control de Permisos
@@ -64,11 +68,11 @@ $cEsta = substr ( str_replace (".php", "", $_SERVER["PHP_SELF"]), strrpos (str_r
 // Hay multiples idiomas..?
 $nCntIdiomas = 0;
 $cSql = "SELECT LanName, LanParticle, LanFlag FROM sysLenguajes ORDER BY LanOrder";
-$nResultado = mysql_query ($cSql) or fErrorSQL($conf["EstadoSitio"], "<br /><br /><b>Error en la consulta:</b><br />" . $cSql . "<br /><br /><b>Tipo de error:</b><br />" . mysql_error() . "<br />");
-while ($aRegistro = mysql_fetch_array($nResultado)) {
-  $aIdiomas["Name"][$nCntIdiomas] = $aRegistro["LanName"];
-  $aIdiomas["Part"][$nCntIdiomas] = $aRegistro["LanParticle"];
-  $aIdiomas["Flag"][$nCntIdiomas] = $aRegistro["LanFlag"];
+$nResultado = $nConexion->query ($cSql) or fErrorSQL($conf["EstadoSitio"], "<br /><br /><b>Error en la consulta:</b><br />" . $cSql . "<br /><br /><b>Tipo de error:</b><br />" . mysqli_error($nConexion) . "<br />");
+while ($aRegistro = $nResultado->fetch_object()) {
+  $aIdiomas["Name"][$nCntIdiomas] = $aRegistro->LanName;
+  $aIdiomas["Part"][$nCntIdiomas] = $aRegistro->LanParticle;
+  $aIdiomas["Flag"][$nCntIdiomas] = $aRegistro->LanFlag;
   $nCntIdiomas++;
 }
 
@@ -76,21 +80,21 @@ while ($aRegistro = mysql_fetch_array($nResultado)) {
 // Determina la existencia de Acciones personalizadas (y sus permisos)
 if ($cnfPerAcciones) {
   $cSql = "SELECT * FROM sysAcciones WHERE ModNombre='" . $cnfModulo . "' ORDER BY AccOrden";
-  $nResultado = mysql_query ($cSql) or fErrorSQL($conf["EstadoSitio"], "<br /><br /><b>Error en la consulta:</b><br />" . $cSql . "<br /><br /><b>Tipo de error:</b><br />" . mysql_error() . "<br />");
+  $nResultado = $nConexion->query($cSql) or fErrorSQL($conf["EstadoSitio"], "<br /><br /><b>Error en la consulta:</b><br />" . $cSql . "<br /><br /><b>Tipo de error:</b><br />" . mysqli_error($nConexion) . "<br />");
 
   $aFilas["R"] = 0 ;  // Cantidad de Acciones a nivel de Registro
   $aFilas["G"] = 0 ;  // Cantidad de Acciones a nivel General
-  while ($aRegistro  = mysql_fetch_array($nResultado)) {
-    $aAcciones[$aFilas["R"]+$aFilas["G"]]["Nivel"]     = $aRegistro["AccNivel"] ;
-    $aAcciones[$aFilas["R"]+$aFilas["G"]]["Titulo"]    = $aRegistro["AccTitulo"] ;
-    $aAcciones[$aFilas["R"]+$aFilas["G"]]["Link"]      = $aRegistro["AccLink"] ;
-    $aAcciones[$aFilas["R"]+$aFilas["G"]]["EjecutarSi"] = $aRegistro["AccEjecutarSi"] ;
-    $aAcciones[$aFilas["R"]+$aFilas["G"]]["VentAlto"]  = $aRegistro["AccVentAlto"] ;
-    $aAcciones[$aFilas["R"]+$aFilas["G"]]["VentAncho"] = $aRegistro["AccVentAncho"] ;
+  while ($aRegistro  = $nResultado->fetch_object()) {
+    $aAcciones[$aFilas["R"]+$aFilas["G"]]["Nivel"]     = $aRegistro->AccNivel;
+    $aAcciones[$aFilas["R"]+$aFilas["G"]]["Titulo"]    = $aRegistro->AccTitulo;
+    $aAcciones[$aFilas["R"]+$aFilas["G"]]["Link"]      = $aRegistro->AccLink;
+    $aAcciones[$aFilas["R"]+$aFilas["G"]]["EjecutarSi"] = $aRegistro->AccEjecutarSi;
+    $aAcciones[$aFilas["R"]+$aFilas["G"]]["VentAlto"]  = $aRegistro->AccVentAlto;
+    $aAcciones[$aFilas["R"]+$aFilas["G"]]["VentAncho"] = $aRegistro->AccVentAncho;
 
-    $aFilas[$aRegistro["AccNivel"]]++ ;
+    $aFilas[$aRegistro->AccNivel]++ ;
   }
-  mysql_free_result ($nResultado);
+  mysqli_free_result ($nResultado);
 }
 
 
@@ -98,32 +102,32 @@ $nCntCposNoCons = 0 ;
 
 // Armado de la SELECT, los posibles Ordenes y los posibles Filtros
 $cSql = "SELECT * FROM sysInfo WHERE ModNombre='" . $cnfModulo . "' ORDER BY QryPosicion";
-$nResultado = mysql_query ($cSql) or fErrorSQL($conf["EstadoSitio"], "<br /><br /><b>Error en la consulta:</b><br />" . $cSql . "<br /><br /><b>Tipo de error:</b><br />" . mysql_error() . "<br />");
+$nResultado = $nConexion->query ($cSql) or fErrorSQL($conf["EstadoSitio"], "<br /><br /><b>Error en la consulta:</b><br />" . $cSql . "<br /><br /><b>Tipo de error:</b><br />" . mysqli_error($nConexion) . "<br />");
 $cnfConsulta = "SELECT ";
 $cnfConsAcPe = "SELECT * ";    // Armado de la SELECT por si es necesaria en condiciones para Acciones Personalizada a nivel de Registro
 $nIndiceOrd  = 0;
 $nIndiceFil  = 0;
 $nIndiceCps  = 0;
 
-while ($aRegistro = mysql_fetch_array($nResultado)) {
+while ($aRegistro = $nResultado->fetch_object()) {
 
    // Armado de la SELECT
-   if ($aRegistro["QryCampoAlias"]=='') {
-      $cnfConsulta .= $aRegistro["QryCampo"] . ", ";
+   if ($aRegistro->QryCampoAlias=='') {
+      $cnfConsulta .= $aRegistro->QryCampo . ", ";
    } else {
-      $cnfConsulta .= $aRegistro["QryCampo"] . " AS " . $aRegistro["QryCampoAlias"] . ", ";
+      $cnfConsulta .= $aRegistro->QryCampo . " AS " . $aRegistro->QryCampoAlias . ", ";
    }
 
-   if ($aRegistro["QryPosicion"]!=999) {
+   if ($aRegistro->QryPosicion != 999) {
 
      // Array con los distintos Campos
-     $aCampo[$nIndiceCps]["Camp"] = $aRegistro["QryCampoNombre"];
+     $aCampo[$nIndiceCps]["Camp"] = $aRegistro->QryCampoNombre;
 
      // Array con la alineacion de los Campos
-     $aCampo[$nIndiceCps]["Alin"] = $aRegistro["QryAlineacion"];
+     $aCampo[$nIndiceCps]["Alin"] = $aRegistro->QryAlineacion;
 
      // Array con los tipos de Campos
-     $aCampo[$nIndiceCps]["Imag"] = $aRegistro["QryCampoImagen"];
+     $aCampo[$nIndiceCps]["Imag"] = $aRegistro->QryCampoImagen;
 
      // Si es una imagen tipo U busca el posible subdirectorio
      if ($aCampo[$nIndiceCps]["Imag"]=="U" && strstr($aCampo[$nIndiceCps]["Camp"],"[")) {
@@ -134,13 +138,13 @@ while ($aRegistro = mysql_fetch_array($nResultado)) {
      }
 
      // Array con los distintos Ordenes posibles
-     if ($aRegistro["QryOrden"]!='N' and $aRegistro["QryPosicion"]!=0) {
+     if ($aRegistro->QryOrden!='N' and $aRegistro->QryPosicion!=0) {
        $aCampo[$nIndiceCps]["Ordn"] = 'S';
-       $aCampo[$nIndiceCps]["Expr"] = ($aRegistro["QryOrdenExpr"]==''?($aRegistro["QryCampoAlias"]==''?$aRegistro["QryCampo"]:$aRegistro["QryCampoAlias"]):$aRegistro["QryOrdenExpr"]) ;
+       $aCampo[$nIndiceCps]["Expr"] = ($aRegistro->QryOrdenExpr==''?($aRegistro->QryCampoAlias==''?$aRegistro->QryCampo:$aRegistro->QryCampoAlias):$aRegistro->QryOrdenExpr) ;
 
-       if ($aRegistro["QryOrden"]!='S') {
+       if ($aRegistro->QryOrden != 'S') {
          $cnfOrdExpr = $aCampo[$nIndiceCps]["Expr"];
-         $cnfOrdTipo = $aRegistro["QryOrden"]=="D"?"DESC":"ASC" ;
+         $cnfOrdTipo = $aRegistro->QryOrden=="D"?"DESC":"ASC" ;
        }
 
        $nIndiceOrd++;
@@ -150,9 +154,9 @@ while ($aRegistro = mysql_fetch_array($nResultado)) {
      $nIndiceCps++;
 
      // Array con los distintos Filtros posibles
-     if ($aRegistro["QryFiltro"]!='N' and $aRegistro["QryPosicion"]!=0) {
-       $aFiltro[$nIndiceFil]["Expr"] = $aRegistro["QryFiltroExpr"]==''?$aRegistro["QryCampo"]:$aRegistro["QryFiltroExpr"];
-       $aFiltro[$nIndiceFil]["Nomb"] = $aRegistro["QryCampoNombre"];
+     if ($aRegistro->QryFiltro != 'N'  and  $aRegistro->QryPosicion != 0) {
+       $aFiltro[$nIndiceFil]["Expr"] = $aRegistro->QryFiltroExpr==''?$aRegistro->QryCampo:$aRegistro->QryFiltroExpr;
+       $aFiltro[$nIndiceFil]["Nomb"] = $aRegistro->QryCampoNombre;
 
        $nIndiceFil++;
      }
@@ -163,26 +167,26 @@ while ($aRegistro = mysql_fetch_array($nResultado)) {
 
    }
 }
-mysql_free_result ($nResultado);
+mysqli_free_result ($nResultado);
 
 $cnfConsulta = substr_replace($cnfConsulta, '', -2, 1);
 
 
 // Cláusula FROM dentro de la SELECT
 $cSql = "SELECT * FROM sysFrom WHERE ModNombre='" . $cnfModulo . "'";
-$nResultado = mysql_query ($cSql) or fErrorSQL($conf["EstadoSitio"], "<br /><br /><b>Error en la consulta:</b><br />" . $cSql . "<br /><br /><b>Tipo de error:</b><br />" . mysql_error() . "<br />");
-$aRegistro = mysql_fetch_array($nResultado);
+$nResultado = $nConexion->query ($cSql) or fErrorSQL($conf["EstadoSitio"], "<br /><br /><b>Error en la consulta:</b><br />" . $cSql . "<br /><br /><b>Tipo de error:</b><br />" . mysqli_error($nConexion) . "<br />");
+$aRegistro = $nResultado->fetch_object();
 $cnfConsulta .= "FROM ";
 $cnfConsAcPe .= "FROM ";
-if ($aRegistro["QryFromAlias"]=='') {
-   $cnfConsulta .= $aRegistro["QryFrom"] . " ";
-   $cnfConsAcPe .= $aRegistro["QryFrom"] . " ";
+if ($aRegistro->QryFromAlias=='') {
+   $cnfConsulta .= $aRegistro->QryFrom . " ";
+   $cnfConsAcPe .= $aRegistro->QryFrom . " ";
 } else {
-   $cnfConsulta .= $aRegistro["QryFrom"] . " AS " . $aRegistro["QryFromAlias"] . " ";
-   $cnfConsAcPe .= $aRegistro["QryFrom"] . " AS " . $aRegistro["QryFromAlias"] . " ";
+   $cnfConsulta .= $aRegistro->QryFrom . " AS " . $aRegistro->QryFromAlias . " ";
+   $cnfConsAcPe .= $aRegistro->QryFrom . " AS " . $aRegistro->QryFromAlias . " ";
 }
-$cTblFrom = $aRegistro["QryFrom"];
-mysql_free_result ($nResultado);
+$cTblFrom = $aRegistro->QryFrom;
+mysqli_free_result ($nResultado);
 
 
 // Si hay muchos idiomas, me fijo si esta tabla los necesita
@@ -190,75 +194,80 @@ $cMostrarFlag = "No" ;
 if ($nCntIdiomas>1) {
   // Si hay una tabla para multiples idiomas debe llamarse Tabla_Lng
   $cSql = "SHOW TABLES LIKE '".$cTblFrom."_Lng'";
-  $nResultAux1 = mysql_query ($cSql) or fErrorSQL($conf["EstadoSitio"], "<br /><br /><b>Error en la consulta:</b><br />" . $cSql . "<br /><br /><b>Tipo de error:</b><br />" . mysql_error() . "<br />");
-  if ($aRegistAux1 = mysql_fetch_array($nResultAux1)) {
+  $nResultAux1 = $nConexion->query ($cSql) or fErrorSQL($conf["EstadoSitio"], "<br /><br /><b>Error en la consulta:</b><br />" . $cSql . "<br /><br /><b>Tipo de error:</b><br />" . mysqli_error($nConexion) . "<br />");
+  if ($aRegistAux1 = $nResultAux1->fetch_object()) {
     $cMostrarFlag = "Si" ;
   }
-  mysql_free_result ($nResultAux1);
+  mysqli_free_result ($nResultAux1);
 }
 
 
 // Cláusula JOIN dentro de la SELECT
 $cSql = "SELECT * FROM sysJoin WHERE ModNombre='" . $cnfModulo . "' AND QryJoinUso IN ('I','A')";
-$nResultado = mysql_query ($cSql) or fErrorSQL($conf["EstadoSitio"], "<br /><br /><b>Error en la consulta:</b><br />" . $cSql . "<br /><br /><b>Tipo de error:</b><br />" . mysql_error() . "<br />");
-while ($aRegistro = mysql_fetch_array($nResultado)) {
-  if ($aRegistro["QryJoinTipo"]=="L") {
+$nResultado = $nConexion->query ($cSql) or fErrorSQL($conf["EstadoSitio"], "<br /><br /><b>Error en la consulta:</b><br />" . $cSql . "<br /><br /><b>Tipo de error:</b><br />" . mysqli_error($nConexion) . "<br />");
+while ($aRegistro = $nResultado->fetch_object()) {
+  if ($aRegistro->QryJoinTipo == "L") {
      $cnfConsulta .= "LEFT ";
      $cnfConsAcPe .= "LEFT ";
-  } elseif ($aRegistro["QryJoinTipo"]=="R") {
+  } elseif ($aRegistro->QryJoinTipo == "R") {
      $cnfConsulta .= "RIGHT ";
      $cnfConsAcPe .= "RIGHT ";
-  } elseif ($aRegistro["QryJoinTipo"]=="I") {
+  } elseif ($aRegistro->QryJoinTipo == "I") {
      $cnfConsulta .= "INNER ";
      $cnfConsAcPe .= "INNER ";
   }
   $cnfConsulta .= "JOIN ";
   $cnfConsAcPe .= "JOIN ";
 
-  if ($aRegistro["QryJoinAlias"]=='') {
-     $cnfConsulta .= $aRegistro["QryJoin"] . " ";
-     $cnfConsAcPe .= $aRegistro["QryJoin"] . " ";
+  if ($aRegistro->QryJoinAlias == '') {
+     $cnfConsulta .= $aRegistro->QryJoin . " ";
+     $cnfConsAcPe .= $aRegistro->QryJoin . " ";
   } else {
-     $cnfConsulta .= $aRegistro["QryJoin"] . " AS " . $aRegistro["QryJoinAlias"] . " ";
-     $cnfConsAcPe .= $aRegistro["QryJoin"] . " AS " . $aRegistro["QryJoinAlias"] . " ";
+     $cnfConsulta .= $aRegistro->QryJoin . " AS " . $aRegistro->QryJoinAlias . " ";
+     $cnfConsAcPe .= $aRegistro->QryJoin . " AS " . $aRegistro->QryJoinAlias . " ";
   }
-  $cnfConsulta .= "ON " . $aRegistro["QryJoinExpr"] . " " ;
-  $cnfConsAcPe .= "ON " . $aRegistro["QryJoinExpr"] . " " ;
+  $cnfConsulta .= "ON " . $aRegistro->QryJoinExpr . " " ;
+  $cnfConsAcPe .= "ON " . $aRegistro->QryJoinExpr . " " ;
 }
-mysql_free_result ($nResultado);
+mysqli_free_result ($nResultado);
 
 
 if (isset($_GET["Desde"]) and $_GET["Desde"]=="Relacion") {
   // Cláusula JOIN dentro de la SELECT para info Relacionada
   $cSql = "SELECT * FROM sysJoin WHERE ModNombre='" . $cnfModulo . "' AND RelModulo='" . $_GET["ModuloAct"] . "' AND QryJoinUso = 'R'";
-  $nResultado = mysql_query ($cSql) or fErrorSQL($conf["EstadoSitio"], "<br /><br /><b>Error en la consulta:</b><br />" . $cSql . "<br /><br /><b>Tipo de error:</b><br />" . mysql_error() . "<br />");
-  while ($aRegistro = mysql_fetch_array($nResultado)) {
-     if ($aRegistro["QryJoinTipo"]=="L") {
+  $nResultado = $nConexion->query ($cSql) or fErrorSQL($conf["EstadoSitio"], "<br /><br /><b>Error en la consulta:</b><br />" . $cSql . "<br /><br /><b>Tipo de error:</b><br />" . mysqli_error($nConexion) . "<br />");
+  while ($aRegistro = $nResultado->fetch_object()) {
+     if ($aRegistro->QryJoinTipo == "L") {
         $cnfConsulta .= "LEFT ";
-     } elseif ($aRegistro["QryJoinTipo"]=="R") {
+     } elseif ($aRegistro->QryJoinTipo == "R") {
         $cnfConsulta .= "RIGHT ";
-     } elseif ($aRegistro["QryJoinTipo"]=="I") {
+     } elseif ($aRegistro->QryJoinTipo == "I") {
         $cnfConsulta .= "INNER ";
      }
      $cnfConsulta .= "JOIN ";
   
-     if ($aRegistro["QryJoinAlias"]=='') {
-        $cnfConsulta .= $aRegistro["QryJoin"] . " ";
+     if ($aRegistro->QryJoinAlias == '') {
+        $cnfConsulta .= $aRegistro->QryJoin . " ";
      } else {
-        $cnfConsulta .= $aRegistro["QryJoin"] . " AS " . $aRegistro["QryJoinAlias"] . " ";
+        $cnfConsulta .= $aRegistro->QryJoin . " AS " . $aRegistro->QryJoinAlias . " ";
      }
-     $cnfConsulta .= "ON " . $aRegistro["QryJoinExpr"] . " " ;
+     $cnfConsulta .= "ON " . $aRegistro->QryJoinExpr . " " ;
   }
-  mysql_free_result ($nResultado);
+  mysqli_free_result ($nResultado);
 }
 
 
 // Cláusula WHERE dentro de la SELECT  (Filtro por defecto y permanente)
 $cSql = "SELECT * FROM sysWhere WHERE ModNombre='" . $cnfModulo . "'";
-$nResultado = mysql_query ($cSql) or fErrorSQL($conf["EstadoSitio"], "<br /><br /><b>Error en la consulta:</b><br />" . $cSql . "<br /><br /><b>Tipo de error:</b><br />" . mysql_error() . "<br />");
-$aRegistro = mysql_fetch_array($nResultado);
-$cnfFiltInic = $aRegistro["QryWhereExpr"];
-mysql_free_result ($nResultado);
+$nResultado = $nConexion->query ($cSql) or fErrorSQL($conf["EstadoSitio"], "<br /><br /><b>Error en la consulta:</b><br />" . $cSql . "<br /><br /><b>Tipo de error:</b><br />" . mysqli_error($nConexion) . "<br />");
+
+// si hay sysWhere lo filtro, de lo contrario no, pero declaro la variable para que no de alert
+$cnfFiltInic = '';
+if($nResultado->num_rows > 0){
+  $aRegistro = $nResultado->fetch_object();
+  $cnfFiltInic = $aRegistro->QryWhereExpr;
+}
+mysqli_free_result ($nResultado);
 
 $cFiltroIni = "";
 $nPosIni    = strpos($cnfFiltInic,"{");
@@ -354,18 +363,18 @@ if ( strlen($CpoFiltro1)!=0 and strlen($TxtFiltro1)!=0 ) {
 // Arma la instrucción SQL y luego la ejecuta
 $cSql = $cnfConsulta . $cFiltro . ($Orden==""?"":" ORDER BY " . $Orden . " " . $Forma) ;
 
-$nResultado = mysql_query ($cSql) or fErrorSQL($conf["EstadoSitio"], "<br /><br /><b>Error en la consulta:</b><br />" . $cSql . "<br /><br /><b>Tipo de error:</b><br />" . mysql_error() . "<br />");
+$nResultado = $nConexion->query ($cSql) or fErrorSQL($conf["EstadoSitio"], "<br /><br /><b>Error en la consulta:</b><br />" . $cSql . "<br /><br /><b>Tipo de error:</b><br />" . mysqli_error($nConexion) . "<br />");
 
 
-if ( mysql_num_rows($nResultado)==0 ) {
+if ( $nResultado->num_rows == 0 ) {
   $nParar = -1;
   $nFilas = -2;
 
   $cPaginas = $txt['SinRegistros'];
 
 } else {
-  $nFilas    = (mysql_num_rows($nResultado)-1);
-  $nColumnas = (mysql_num_fields($nResultado)-1);
+  $nFilas    = ($nResultado->num_rows -1 );
+  $nColumnas = ($nResultado->field_count -1 );
 
   if ( $nFilas < $Inicio ) {
     $Inicio -= $nCantidad;
@@ -379,9 +388,8 @@ if ( mysql_num_rows($nResultado)==0 ) {
 
   $cPaginas = $txt['PaginaX'] . " " . (floor($nFilas/$nCantidad)+1);
 
-  mysql_data_seek ($nResultado, $Inicio);
+  mysqli_data_seek ($nResultado, $Inicio);
 }
-
 ?>
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
     "http://www.w3.org/TR/html4/loose.dtd">
@@ -401,7 +409,7 @@ if ( mysql_num_rows($nResultado)==0 ) {
     * Pide la confirmación del usuario para eliminar un registro.
     **/
     function Borrar(Donde,Codigo,Inicio,Orden,Forma,CpoFiltro1,TipFiltro1,TxtFiltro1,NexFiltro,CpoFiltro2,TipFiltro2,TxtFiltro2,vInicio,vCantidad) {
-      if (confirm('<?= $txt["ConfBorr"]?>')) {
+      if (confirm('<?php echo $txt["ConfBorr"]; ?>')) {
         location.href = 'ABM.php?Accion=Borrar&Codigo='+Codigo+'&Inicio='+Inicio+'&Orden='+Orden+'&Forma='+Forma+'&CpoFiltro1='+CpoFiltro1+'&TipFiltro1='+TipFiltro1+'&TxtFiltro1='+TxtFiltro1+'&NexFiltro='+NexFiltro+'&CpoFiltro2='+CpoFiltro2+'&TipFiltro2='+TipFiltro2+'&TxtFiltro2='+TxtFiltro2+'&Inicio='+vInicio+'&Cantidad='+vCantidad ;
       }
     }
@@ -420,11 +428,10 @@ if ( mysql_num_rows($nResultado)==0 ) {
 
 <body bgcolor="#FFFFFF" text="#000000" style="margin:0;">
 
-<center><span class="gralNormal" style="font-weight: bold;"><?= $cnfModNombre?></span></center>
-
+<center><span class="gralNormal" style="font-weight: bold;"><?php echo $cnfModNombre?></span></center>
 <table id="infoModulo" width="98%" cellspacing="1" cellpadding="1" align="center" border="0" class="gralTabla">
   <tr bgcolor="#929292" align="center">
-    <td><b>N&ordm;</b></td><? 
+    <td><b>N&ordm;</b></td><?php 
     for ($nElem=1; $nElem<count($aCampo); $nElem++) {
       $cURLData = "&amp;Orden=" . $aCampo[$nElem]["Expr"] . "&amp;Modulo=" . $cnfModulo . ((isset($_GET["Desde"]) and $_GET["Desde"]=="Relacion")?"&amp;Desde=Relacion&amp;ModuloRel=".$cnfModulo."&amp;ModuloAct=".$_GET["ModuloAct"]."&amp;CampoRel=".urlencode($_GET["CampoRel"])."&amp;Codigo=".$_GET["Codigo"]:"") . "&amp;CpoFiltro1=" . fPonerBarras($CpoFiltro1) . "&amp;TipFiltro1=" . $TipFiltro1 . "&amp;TxtFiltro1=" . urlencode($TxtFiltro1) . "&amp;NexFiltro=" . $NexFiltro . "&amp;CpoFiltro2=" . fPonerBarras($CpoFiltro2) . "&amp;TipFiltro2=" . $TipFiltro2 . "&amp;TxtFiltro2=" . urlencode($TxtFiltro2) . "&amp;Inicio=" . $Inicio  . "&amp;Cantidad=" . $nCantidad ; 
       $cAscOn = "";    $cDesOn = "";
@@ -434,77 +441,79 @@ if ( mysql_num_rows($nResultado)==0 ) {
         else
           $cDesOn = "On";
       } ?>
-      <td><? 
+      <td><?php 
         if ($conf['ModOrden'] == "2d") { ?>
           <table width="100%" height="100%" class="gralTabla">
             <tr>
-              <td width="1%"><? 
+              <td width="1%"><?php 
                 if ($aCampo[$nElem]["Ordn"] == 'S') { ?>
-                  <a href="<?= $cEsta?>.php?Forma=ASC<?= $cURLData?>"><img src="Imagenes/imgFlechaAsc<?= $cAscOn?>.gif" width="10" height="9" border="0" valign="middle" title="<?= $txt['Ascendente']?>" alt=""></a><? 
+                  <a href="<?php echo $cEsta?>.php?Forma=ASC<?php echo $cURLData?>"><img src="Imagenes/imgFlechaAsc<?php echo $cAscOn?>.gif" width="10" height="9" border="0" valign="middle" title="<?php echo $txt['Ascendente']?>" alt=""></a><?php  
                 } ?>
               </td>
-              <td width="99%" align="center" rowspan="2"><b><?= $aCampo[$nElem]["Camp"]?></b></td>
+              <td width="99%" align="center" rowspan="2"><b><?php echo $aCampo[$nElem]["Camp"]?></b></td>
             </tr>
             <tr>
-              <td width="1%"><? 
+              <td width="1%"><?php 
                 if ($aCampo[$nElem]["Ordn"] == 'S') { ?>
-                  <a href="<?= $cEsta?>.php?Forma=DESC<?= $cURLData?>"><img src="Imagenes/imgFlechaDes<?= $cDesOn?>.gif" width="10" height="8" border="0" valign="middle" title="<?= $txt['Descendente']?>" alt=""></a><? 
+                  <a href="<?php echo $cEsta?>.php?Forma=DESC<?php echo $cURLData?>"><img src="Imagenes/imgFlechaDes<?php echo $cDesOn?>.gif" width="10" height="8" border="0" valign="middle" title="<?php echo $txt['Descendente']?>" alt=""></a><?php  
                 } ?>
               </td>
             </tr>
-          </table><? 
+          </table><?php  
         } elseif ($conf['ModOrden'] == "2i") { ?>
           <table width="100%" height="100%" class="gralTabla">
             <tr>
-              <td width="99%" align="center" rowspan="2"><b><?= $aCampo[$nElem]["Camp"]?></b></td>
-              <td width="1%"><? 
+              <td width="99%" align="center" rowspan="2"><b><?php echo $aCampo[$nElem]["Camp"]?></b></td>
+              <td width="1%"><?php  
                 if ($aCampo[$nElem]["Ordn"] == 'S') { ?>
-                  <a href="<?= $cEsta?>.php?Forma=ASC<?= $cURLData?>"><img src="Imagenes/imgFlechaAsc<?= $cAscOn?>.gif" width="10" height="9" border="0" valign="middle" title="<?= $txt['Ascendente']?>" alt=""></a><? 
+                  <a href="<?php echo $cEsta?>.php?Forma=ASC<?php echo $cURLData?>"><img src="Imagenes/imgFlechaAsc<?php echo $cAscOn?>.gif" width="10" height="9" border="0" valign="middle" title="<?php echo $txt['Ascendente']?>" alt=""></a><?php  
                 } ?>
               </td>
             </tr>
             <tr>
-              <td width="1%"><? 
+              <td width="1%"><?php  
                 if ($aCampo[$nElem]["Ordn"] == 'S') { ?>
-                  <a href="<?= $cEsta?>.php?Forma=DESC<?= $cURLData?>"><img src="Imagenes/imgFlechaDes<?= $cDesOn?>.gif" width="10" height="8" border="0" valign="middle" title="<?= $txt['Descendente']?>" alt=""></a><? 
+                  <a href="<?php echo $cEsta?>.php?Forma=DESC<?php echo $cURLData?>"><img src="Imagenes/imgFlechaDes<?php echo $cDesOn?>.gif" width="10" height="8" border="0" valign="middle" title="<?php echo $txt['Descendente']?>" alt=""></a><?php  
                 } ?>
               </td>
             </tr>
-          </table><? 
+          </table><?php  
         } elseif ($conf['ModOrden'] == "3") { ?>
-          <b><?= $aCampo[$nElem]["Camp"]?></b><? 
+          <b><?php echo $aCampo[$nElem]["Camp"]?></b><?php  
           if ($aCampo[$nElem]["Ordn"] == 'S') { ?>
-            <a href="<?= $cEsta?>.php?Forma=ASC<?= $cURLData?>"><img src="Imagenes/imgFlechaAsc<?= $cAscOn?>.gif" width="10" height="9" border="0" valign="middle" title="<?= $txt['Ascendente']?>" alt=""></a>
-            <a href="<?= $cEsta?>.php?Forma=DESC<?= $cURLData?>"><img src="Imagenes/imgFlechaDes<?= $cDesOn?>.gif" width="10" height="8" border="0" valign="middle" title="<?= $txt['Descendente']?>" alt=""></a><? 
+            <a href="<?php echo $cEsta?>.php?Forma=ASC<?php echo $cURLData?>"><img src="Imagenes/imgFlechaAsc<?php echo $cAscOn?>.gif" width="10" height="9" border="0" valign="middle" title="<?php echo $txt['Ascendente']?>" alt=""></a>
+            <a href="<?php echo $cEsta?>.php?Forma=DESC<?php echo $cURLData?>"><img src="Imagenes/imgFlechaDes<?php echo $cDesOn?>.gif" width="10" height="8" border="0" valign="middle" title="<?php echo $txt['Descendente']?>" alt=""></a><?php  
           } 
         } else { 
           if ($aCampo[$nElem]["Ordn"] == 'S') { 
             if ($aCampo[$nElem]["Expr"] == $Orden) {
               if ($Forma == "ASC") { ?>
-                <a class="columna" href="<?= $cEsta?>.php?Forma=DESC<?= $cURLData?>"><b><?= $aCampo[$nElem]["Camp"]?></b></a><img src="Imagenes/imgFlechaAsc.gif" width="10" height="9" border="0" valign="middle" title="<?= $txt['Ascendente']?>" alt=""><? 
+                <a class="columna" href="<?php echo $cEsta?>.php?Forma=DESC<?php echo $cURLData?>"><b><?php echo $aCampo[$nElem]["Camp"]?></b></a><img src="Imagenes/imgFlechaAsc.gif" width="10" height="9" border="0" valign="middle" title="<?php echo $txt['Ascendente']?>" alt=""><?php  
               } else { ?>
-                <a class="columna" href="<?= $cEsta?>.php?Forma=ASC<?= $cURLData?>"><b><?= $aCampo[$nElem]["Camp"]?></b></a><img src="Imagenes/imgFlechaDes.gif" width="10" height="9" border="0" valign="middle" title="<?= $txt['Descendente']?>" alt=""><? 
+                <a class="columna" href="<?php echo $cEsta?>.php?Forma=ASC<?php echo $cURLData?>"><b><?php echo $aCampo[$nElem]["Camp"]?></b></a><img src="Imagenes/imgFlechaDes.gif" width="10" height="9" border="0" valign="middle" title="<?php echo $txt['Descendente']?>" alt=""><?php  
               }
             } else { ?>
-              <a class="columna" href="<?= $cEsta?>.php?Forma=ASC<?= $cURLData?>"><b><?= $aCampo[$nElem]["Camp"]?></b></a><? 
+              <a class="columna" href="<?php echo $cEsta?>.php?Forma=ASC<?php echo $cURLData?>"><b><?php echo $aCampo[$nElem]["Camp"]?></b></a><?php  
             }
           } else { ?>
-            <b><?= $aCampo[$nElem]["Camp"]?></b><? 
+            <b><?php echo $aCampo[$nElem]["Camp"]?></b><?php  
           } 
         } ?>
-      </td><? 
+      </td><?php  
     } 
     if ( $_SESSION["gbl".$conf["VariablesSESSION"]."Tipo"]=="I" ) { ?>
-      <td><b><?= $txt['InfoArchivo']?></b></td><? 
+      <td><b><?php echo $txt['InfoArchivo']?></b></td><?php  
     } 
     if ($conf["MostrarBotonABMDesactivado"]=="Si" or (strstr($cnfModInfoAdic . $cnfModInfoRela, "S") or ($_GET["Desde"]!="Relacion" and strstr($cnfPerEditar . $cnfPerBorrar . $cnfPerAcciones, "S")))) { ?>
-      <td><b><?= $txt['Acciones']?></b></td><? 
+      <td><b><?php echo $txt['Acciones']?></b></td><?php  
     } ?>
-  </tr><?
+  </tr><?php
+
   for ($nFilaActual=$Inicio; $nFilaActual<=$nParar; $nFilaActual++ ) {
-    $aRegistro  = mysql_fetch_row($nResultado) ; ?>
+    $aRegistro  = $nResultado->fetch_row(); 
+    ?>
     <tr>
-      <td align="center"><?= $nFilaActual+1?></td><?
+      <td align="center"><?php echo $nFilaActual+1?></td><?php
     for ($nColumnaActual=1; $nColumnaActual<=($nColumnas-$nCntCposNoCons); $nColumnaActual++ ) {
       if ($aCampo[$nColumnaActual]["Alin"]=="D") {
         $cAlineacion = "right";
@@ -513,10 +522,10 @@ if ( mysql_num_rows($nResultado)==0 ) {
       } else {
         $cAlineacion = "left";
       } ?>
-      <td align="<?= $cAlineacion?>">
-        <?
-        if ($aRegistro[$nColumnaActual]!="") {
-          if ($_SESSION["gbl".$conf["VariablesSESSION"]."Tipo"]=="I" and $aCampo[$nColumnaActual]["Imag"]!="N") {
+      <td align="<?php echo $cAlineacion; ?>">
+        <?php 
+        if ($aRegistro[$nColumnaActual] != "") {
+          if ($_SESSION["gbl".$conf["VariablesSESSION"]."Tipo"] == "I" && $aCampo[$nColumnaActual]["Imag"] !="N" ) {
             $aCampo[$nColumnaActual]["Imag"] = ($aRegistro[1]=="Documentos"?"A":"S") ;
           }
           if ($aCampo[$nColumnaActual]["Imag"]=="S") {
@@ -525,7 +534,7 @@ if ( mysql_num_rows($nResultado)==0 ) {
             if (is_file("../Upload/" . $aRegistro[$nColumnaActual])) {
               $aPropImg = getimagesize("../Upload/" . $aRegistro[$nColumnaActual]) ;
               $cInfoArc = $aPropImg[0]."x".$aPropImg[1] . " - " . filesize($conf['DirUpload'] . $aRegistro[$nColumnaActual]) . " bytes" ;
-              ?>&nbsp;&nbsp;<a href="javascript:Abrir('VerImagen.php?Imagen=<?= $aRegistro[$nColumnaActual]?>&amp;Info=<?= $cInfoArc?>&amp;Ancho=<?= $aPropImg[0]?>&amp;Alto=<?= $aPropImg[1]?>','Imagen',<?= $aPropImg[0]?>,<?= $aPropImg[1]?>)"><img src="Imagenes/imgIconoDatos.gif" width="10" height="11" border="0" valign="middle" title="<?= $txt['VerImagen']?>" alt=""></a><?
+              ?>&nbsp;&nbsp;<a href="javascript:Abrir('VerImagen.php?Imagen=<?php echo $aRegistro[$nColumnaActual]?>&amp;Info=<?php echo $cInfoArc?>&amp;Ancho=<?php echo $aPropImg[0]?>&amp;Alto=<?php echo $aPropImg[1]?>','Imagen',<?php echo $aPropImg[0]?>,<?php echo $aPropImg[1]?>)"><img src="Imagenes/imgIconoDatos.gif" width="10" height="11" border="0" valign="middle" title="<?php echo $txt['VerImagen']?>" alt=""></a><?php 
             } else {
               //echo("Imagen no disponible") ;
             }
@@ -539,9 +548,9 @@ if ( mysql_num_rows($nResultado)==0 ) {
               if (in_array($cFileExte, $aImageExtAllowed)) {
                 $aPropImg = getimagesize($cFileName) ;
                 $cInfoArc = $aPropImg[0]."x".$aPropImg[1] . " - " . filesize($conf['DirUpload'] . "Directos/" . ($aCampo[$nColumnaActual]["SubD"]==""?"":$aCampo[$nColumnaActual]["SubD"]."/") . $aRegistro[$nColumnaActual]) . " bytes" ;
-                ?>&nbsp;&nbsp;<a href="javascript:Abrir('VerImagen.php?Imagen=Directos/<?=  ($aCampo[$nColumnaActual]["SubD"]==""?"":$aCampo[$nColumnaActual]["SubD"]."/") . $aRegistro[$nColumnaActual]?>&Info=<?= $cInfoArc?>&Ancho=<?= $aPropImg[0]?>&Alto=<?= $aPropImg[1]?>','Imagen',<?= $aPropImg[0]?>,<?= $aPropImg[1]?>)"><img src="Imagenes/imgIconoDatos.gif" width="10" height="11" border="0" align="absmiddle" title="<?= $txt['VerImagen']?>"></a><?
+                ?>&nbsp;&nbsp;<a href="javascript:Abrir('VerImagen.php?Imagen=Directos/<?php echo  ($aCampo[$nColumnaActual]["SubD"]==""?"":$aCampo[$nColumnaActual]["SubD"]."/") . $aRegistro[$nColumnaActual]?>&Info=<?php echo $cInfoArc?>&Ancho=<?php echo $aPropImg[0]?>&Alto=<?php echo $aPropImg[1]?>','Imagen',<?php echo $aPropImg[0]?>,<?php echo $aPropImg[1]?>)"><img src="Imagenes/imgIconoDatos.gif" width="10" height="11" border="0" align="absmiddle" title="<?php echo $txt['VerImagen']?>"></a><?php 
               } else {
-                ?>&nbsp;&nbsp;<a href="Download.php?file=<?= $cFileName?>"><img src="Imagenes/imgIconoDatos.gif" width="10" height="11" border="0" align="absmiddle" title="<?= $txt['VerArchivo']?>"></a><?
+                ?>&nbsp;&nbsp;<a href="Download.php?file=<?php echo $cFileName?>"><img src="Imagenes/imgIconoDatos.gif" width="10" height="11" border="0" align="absmiddle" title="<?php echo $txt['VerArchivo']?>"></a><?php 
               }
             } else {
               //echo("Imagen no disponible") ;
@@ -550,74 +559,85 @@ if ( mysql_num_rows($nResultado)==0 ) {
             echo(substr_count($aRegistro[$nColumnaActual],"/")==1?$aRegistro[$nColumnaActual]:substr(strstr($aRegistro[$nColumnaActual],"/"),1)); 
             if (is_file("../Upload/" . $aRegistro[$nColumnaActual])) {
               $cInfoArc = filesize($conf['DirUpload'] . $aRegistro[$nColumnaActual]) . " bytes" ;
-              ?>&nbsp;&nbsp;<a href="javascript:Abrir('../Upload/<?= $aRegistro[$nColumnaActual]?>','Documento')"><img src="Imagenes/imgIconoDatos.gif" width="10" height="11" border="0" valign="middle" title="<?= $txt['VerDocumento']?>" alt=""></a><?
+              ?>&nbsp;&nbsp;<a href="javascript:Abrir('../Upload/<?php echo $aRegistro[$nColumnaActual]?>','Documento')"><img src="Imagenes/imgIconoDatos.gif" width="10" height="11" border="0" valign="middle" title="<?php echo $txt['VerDocumento']?>" alt=""></a><?php 
             } else {
               //echo("Archivo no disponible") ;
             }
           } else {
+            /*
+            ============================================================
+            función omitida - 05/2014
+            ------------------------------------------------------------
+            
+            echo '<pre>';
+            $info = $nResultado->fetch_field_direct($nColumnaActual);
+            echo $info->type;
+            echo '</pre>';
+
             if (strstr("#int#real#",mysql_field_type($nResultado,$nColumnaActual))) 
               $cSalida = number_format($aRegistro[$nColumnaActual]) ;
-//          elseif (mysql_field_type($nResultado,$nColumnaActual)=="date")
-//            $cSalida = fFormatoFecha($aRegistro[$nColumnaActual], str_replace(array("D", "M", "Y"), array("dd", "mm", "aaaa"), substr_replace(substr_replace($conf["Fecha"], '-', 1, 0), '-', 3, 0))) ;
             else
               $cSalida = htmlspecialchars($aRegistro[$nColumnaActual]) ;
+            =============================================================
+            */
 
+            $cSalida = htmlspecialchars($aRegistro[$nColumnaActual]);
             echo ($cSalida==""?"&nbsp;":$cSalida) ;
           }
         } else {
           echo("&nbsp;");
-        }?>
-      </td><?
+        } ?>
+      </td><?php
     }
     ?>
-    <? if ( $_SESSION["gbl".$conf["VariablesSESSION"]."Tipo"]=="I" ) { ?>
+    <?php if ( $_SESSION["gbl".$conf["VariablesSESSION"]."Tipo"]=="I" ) { ?>
       <td align="right">
-        <?= (isset($cInfoArc)?$cInfoArc:$txt['NoArchivo']) ?>
+        <?php echo (isset($cInfoArc)?$cInfoArc:$txt['NoArchivo']) ?>
       </td>
-    <? } ?>
-    <? if ($conf["MostrarBotonABMDesactivado"]=="Si" or (strstr($cnfModInfoAdic . $cnfModInfoRela, "S") or ($_GET["Desde"]!="Relacion" and strstr($cnfPerEditar . $cnfPerBorrar . $cnfPerAcciones, "S")))) { ?>
-      <td align="center" valign="middle"><? 
+    <?php } ?>
+    <?php if ($conf["MostrarBotonABMDesactivado"]=="Si" or (strstr($cnfModInfoAdic . $cnfModInfoRela, "S") or ($_GET["Desde"]!="Relacion" and strstr($cnfPerEditar . $cnfPerBorrar . $cnfPerAcciones, "S")))) { ?>
+      <td align="center" valign="middle"><?php  
       if ( $cnfModInfoAdic=="S" ) { ?>
-        <a href="javascript:Abrir('Divide.php?Opcion=2&amp;Modulo=<?= $cnfModulo?>&amp;Codigo=<?= $aRegistro[0]?>','MasInfo')"><img src="Imagenes/imgIconoDatos.gif" width="10" height="11" border="0" valign="middle" title="<?= $txt['MasInfo']?>" alt=""></a>&nbsp;<? 
+        <a href="javascript:Abrir('Divide.php?Opcion=2&amp;Modulo=<?php echo $cnfModulo?>&amp;Codigo=<?php echo $aRegistro[0]?>','MasInfo')"><img src="Imagenes/imgIconoDatos.gif" width="10" height="11" border="0" valign="middle" title="<?php echo $txt['MasInfo']?>" alt=""></a>&nbsp;<?php 
       } 
       if ( $cnfModInfoRela=="S" ) {
 
         $cSql = "SELECT sysRelacion.RelModulo, ModTexto, RelCampo, RelExtraJoin FROM sysRelacion LEFT JOIN sysModulos ON sysRelacion.RelModulo=sysModulos.ModNombre WHERE sysRelacion.ModNombre='" . $cnfModulo . "'" ;
-        $nResulInfRel = mysql_query ($cSql) or fErrorSQL($conf["EstadoSitio"], "<br /><br /><b>Error en la consulta:</b><br />" . $cSql . "<br /><br /><b>Tipo de error:</b><br />" . mysql_error() . "<br />");
+        $nResulInfRel = $nConexion->query ($cSql) or fErrorSQL($conf["EstadoSitio"], "<br /><br /><b>Error en la consulta:</b><br />" . $cSql . "<br /><br /><b>Tipo de error:</b><br />" . mysqli_error($nConexion) . "<br />");
 
-        while ($aRegisInfRel = mysql_fetch_array($nResulInfRel)) { 
+        while ($aRegisInfRel = $nResulInfRel->fetch_object()) { 
           // Determino la cantidad de registros en las tablas relacionadas  
-          $cSql = "SELECT COUNT(*) AS ccCantidad FROM " . $aRegisInfRel["RelModulo"] . " " . $aRegisInfRel["RelExtraJoin"] .  " WHERE " . (strstr($aRegisInfRel["RelCampo"],"XXCodigoXX")?str_replace("XXCodigoXX",$aRegistro[0],$aRegisInfRel["RelCampo"]):$aRegisInfRel["RelCampo"]."=".$aRegistro[0]) ; 
-          $nResulCntRel = mysql_query ($cSql) or fErrorSQL($conf["EstadoSitio"], "<br /><br /><b>Error en la consulta:</b><br />" . $cSql . "<br /><br /><b>Tipo de error:</b><br />" . mysql_error() . "<br />");
+          $cSql = "SELECT COUNT(*) AS ccCantidad FROM " . $aRegisInfRel->RelModulo . " " . $aRegisInfRel->RelExtraJoin .  " WHERE " . (strstr($aRegisInfRel->RelCampo,"XXCodigoXX")?str_replace("XXCodigoXX",$aRegistro[0],$aRegisInfRel->RelCampo):$aRegisInfRel->RelCampo."=".$aRegistro[0]) ; 
+          $nResulCntRel = $nConexion->query ($cSql) or fErrorSQL($conf["EstadoSitio"], "<br /><br /><b>Error en la consulta:</b><br />" . $cSql . "<br /><br /><b>Tipo de error:</b><br />" . mysqli_error($nConexion) . "<br />");
 
-          $aRegisCntRel = mysql_fetch_array($nResulCntRel) ;
+          $aRegisCntRel = $nResulCntRel->fetch_object() ;
 
-          if ($conf["MostrarInfoRelacVacia"]=="Si" or $aRegisCntRel["ccCantidad"]>0) { ?>
-            <a href="javascript:Abrir('Divide.php?Opcion=5&amp;ModuloRel=<?= $aRegisInfRel["RelModulo"]?>&amp;ModuloAct=<?= $cnfModulo?>&amp;CampoRel=<?= urlencode($aRegisInfRel["RelCampo"])?>&amp;Codigo=<?= $aRegistro[0]?>','InfoRel')"><img src="Imagenes/imgIconoFlecha.gif" width="10" height="11" border="0" valign="middle" title="<?= $aRegisInfRel["ModTexto"] . " > " . $aRegisCntRel["ccCantidad"] . " " . ($aRegisCntRel["ccCantidad"]==1?$txt['Registro']:$txt['Registros'])?>" alt=""></a>&nbsp; <?
+          if ($conf["MostrarInfoRelacVacia"]=="Si" or $aRegisCntRel->ccCantidad>0) { ?>
+            <a href="javascript:Abrir('Divide.php?Opcion=5&amp;ModuloRel=<?php echo $aRegisInfRel->RelModulo?>&amp;ModuloAct=<?php echo $cnfModulo?>&amp;CampoRel=<?php echo urlencode($aRegisInfRel->RelCampo)?>&amp;Codigo=<?php echo $aRegistro[0]?>','InfoRel')"><img src="Imagenes/imgIconoFlecha.gif" width="10" height="11" border="0" valign="middle" title="<?php echo $aRegisInfRel->ModTexto . " > " . $aRegisCntRel->ccCantidad . " " . ($aRegisCntRel->ccCantidad==1?$txt['Registro']:$txt['Registros'])?>" alt=""></a>&nbsp; <?php 
           } else { ?>
-            <img src="Imagenes/imgGralTrasp.gif" width="10" height="11" border="0" valign="middle" alt="">&nbsp; <? 
+            <img src="Imagenes/imgGralTrasp.gif" width="10" height="11" border="0" valign="middle" alt="">&nbsp; <?php  
           } 
-          mysql_free_result ($nResulCntRel) ;
+          mysqli_free_result ($nResulCntRel) ;
         }
-        mysql_free_result ($nResulInfRel) ;
+        mysqli_free_result ($nResulInfRel) ;
 
       }
       // Más idiomas
       if ($cMostrarFlag=="Si") {
         for ($nIdioma=1; $nIdioma<$nCntIdiomas; $nIdioma++) { ?>
-          <a href="javascript:Abrir('InfoMngr.php?Codigo=<?= $aRegistro[0]?>&Lang=Si&Flag=<?= $aIdiomas["Flag"][$nIdioma]?>&Part=<?= $aIdiomas["Part"][$nIdioma]?>','Registro')"><img src="Lenguajes/flags/<?= $aIdiomas["Flag"][$nIdioma]?>.gif" width="20" height="12" border="0" valign="middle" alt=""></a><?
+          <a href="javascript:Abrir('InfoMngr.php?Codigo=<?php echo $aRegistro[0]?>&Lang=Si&Flag=<?php echo $aIdiomas["Flag"][$nIdioma]?>&Part=<?php echo $aIdiomas["Part"][$nIdioma]?>','Registro')"><img src="Lenguajes/flags/<?php echo $aIdiomas["Flag"][$nIdioma]?>.gif" width="20" height="12" border="0" valign="middle" alt=""></a><?php 
         }
       }
       if (!isset($_GET["Desde"]) or $_GET["Desde"]!="Relacion") {
         if ( $cnfPerEditar=='S' ) { ?>
-          <input class="blanco" type="button" name="Editar" value="<?= $txt['Editar']?>" onClick="javascript:Abrir('InfoMngr.php?Codigo=<?= $aRegistro[0]?>','Registro')">&nbsp; <? 
+          <input class="blanco" type="button" name="Editar" value="<?php echo $txt['Editar']?>" onClick="javascript:Abrir('InfoMngr.php?Codigo=<?php echo $aRegistro[0]?>','Registro')">&nbsp; <?php  
         } elseif ($conf["MostrarBotonABMDesactivado"]=="Si") { ?>
-          <input class="blanco" type="button" name="Editar" value="<?= $txt['Editar']?>">&nbsp; <? 
+          <input class="blanco" type="button" name="Editar" value="<?php echo $txt['Editar']?>">&nbsp; <?php  
         } 
         if ( $cnfPerBorrar=='S' ) { ?>
-          <input class="blanco" type="button" name="Borrar" value="<?= $txt['Borrar']?>" onClick="javascript:Borrar('<?= $cnfModulo?>',<?= $aRegistro[0]?>,<?= $Inicio?>,'<?= $Orden?>','<?= $Forma?>','<?= fPonerBarras($CpoFiltro1)?>','<?= $TipFiltro1?>','<?= urlencode($TxtFiltro1)?>','<?= urlencode($NexFiltro)?>','<?= fPonerBarras($CpoFiltro2)?>','<?= $TipFiltro2?>','<?= urlencode($TxtFiltro2)?>',<?= $Inicio?>,<?= $nCantidad?>)">&nbsp; <? 
+          <input class="blanco" type="button" name="Borrar" value="<?php echo $txt['Borrar']?>" onClick="javascript:Borrar('<?php echo $cnfModulo?>',<?php echo $aRegistro[0]?>,<?php echo $Inicio?>,'<?php echo $Orden?>','<?php echo $Forma?>','<?php echo fPonerBarras($CpoFiltro1)?>','<?php echo $TipFiltro1?>','<?php echo urlencode($TxtFiltro1)?>','<?php echo urlencode($NexFiltro)?>','<?php echo fPonerBarras($CpoFiltro2)?>','<?php echo $TipFiltro2?>','<?php echo urlencode($TxtFiltro2)?>',<?php echo $Inicio?>,<?php echo $nCantidad?>)">&nbsp; <?php  
         } elseif ($conf["MostrarBotonABMDesactivado"]=="Si") { ?>
-          <input class="blanco" type="button" name="Borrar" value="<?= $txt['Borrar']?>">&nbsp; <? 
+          <input class="blanco" type="button" name="Borrar" value="<?php echo $txt['Borrar']?>">&nbsp; <?php  
         } 
         if ($aFilas["R"]>0) { // Acciones personalizadas a nivel de Registro 
           for ($i=0; $i<count($aAcciones); $i++) {
@@ -629,39 +649,40 @@ if ( mysql_num_rows($nResultado)==0 ) {
                 $cEjecutarAccPer = "Si" ;
                 if ( $aAcciones[$i]["EjecutarSi"]!="" ) { 
                   // Existen Condiciones
-                  $cSql = $cnfConsAcPe . "WHERE " . mysql_field_name($nResultado, 0) . "=" . $aRegistro[0] . " AND " . $aAcciones[$i]["EjecutarSi"] ;
-                  $nResulAccPer = mysql_query ($cSql) or fErrorSQL($conf["EstadoSitio"], "<br /><br /><b>Error en la consulta:</b><br />" . $cSql . "<br /><br /><b>Tipo de error:</b><br />" . mysql_error() . "<br />");
+                  $condicion = $nResultado->fetch_field_direct(0);
+                  $cSql = $cnfConsAcPe . "WHERE " . $condicion->name . "=" . $aRegistro[0] . " AND " . $aAcciones[$i]["EjecutarSi"] ;
+                  $nResulAccPer = $nConexion->query ($cSql) or fErrorSQL($conf["EstadoSitio"], "<br /><br /><b>Error en la consulta:</b><br />" . $cSql . "<br /><br /><b>Tipo de error:</b><br />" . mysqli_error($nConexion) . "<br />");
 
-                  if (!($aRegisAccPer = mysql_fetch_array($nResulAccPer))) {
+                  if (!($aRegisAccPer = $nResulAccPer->fetch_object())) {
                     $cEjecutarAccPer = "No" ;
                   }
-                  mysql_free_result ($nResulAccPer) ;
+                  mysqli_free_result ($nResulAccPer) ;
                 }
 
                 if ($cEjecutarAccPer=="Si") {
                   if ($aAcciones[$i]["VentAncho"]!=0 and $aAcciones[$i]["VentAlto"]!=0) { ?>
-                    <input class="blanco" type="button" name="AccPer<?= $i?>" value="<?= $aAcciones[$i]["Titulo"]?>" onClick="javascript:Abrir('Divide.php?Opcion=6&Pagina=<?= $aAcciones[$i]["Link"]?>&Codigo=<?= $aRegistro[0]?>','Acciones', <?= $aAcciones[$i]["VentAncho"]?>, <?= $aAcciones[$i]["VentAlto"]?>)">&nbsp;<? 
+                    <input class="blanco" type="button" name="AccPer<?php echo $i?>" value="<?php echo $aAcciones[$i]["Titulo"]?>" onClick="javascript:Abrir('Divide.php?Opcion=6&Pagina=<?php echo $aAcciones[$i]["Link"]?>&Codigo=<?php echo $aRegistro[0]?>','Acciones', <?php echo $aAcciones[$i]["VentAncho"]?>, <?php echo $aAcciones[$i]["VentAlto"]?>)">&nbsp;<?php  
                   } else { ?>
-                    <input class="blanco" type="button" name="AccPer<?= $i?>" value="<?= $aAcciones[$i]["Titulo"]?>" onClick="javascript:Ejecutar('<?= $cnfModulo?>','<?= $aAcciones[$i]["Link"]?>','<?= $txt['ConfAccP']?>',<?= $aRegistro[0]?>,<?= $Inicio?>,'<?= $Orden?>','<?= $Forma?>','<?= fPonerBarras($CpoFiltro1)?>','<?= $TipFiltro1?>','<?= urlencode($TxtFiltro1)?>','<?= urlencode($NexFiltro)?>','<?= fPonerBarras($CpoFiltro2)?>','<?= $TipFiltro2?>','<?= urlencode($TxtFiltro2)?>',<?= $Inicio?>,<?= $nCantidad?>)">&nbsp;<? 
+                    <input class="blanco" type="button" name="AccPer<?php echo $i?>" value="<?php echo $aAcciones[$i]["Titulo"]?>" onClick="javascript:Ejecutar('<?php echo $cnfModulo?>','<?php echo $aAcciones[$i]["Link"]?>','<?php echo $txt['ConfAccP']?>',<?php echo $aRegistro[0]?>,<?php echo $Inicio?>,'<?php echo $Orden?>','<?php echo $Forma?>','<?php echo fPonerBarras($CpoFiltro1)?>','<?php echo $TipFiltro1?>','<?php echo urlencode($TxtFiltro1)?>','<?php echo urlencode($NexFiltro)?>','<?php echo fPonerBarras($CpoFiltro2)?>','<?php echo $TipFiltro2?>','<?php echo urlencode($TxtFiltro2)?>',<?php echo $Inicio?>,<?php echo $nCantidad?>)">&nbsp;<?php 
                   }
                 } elseif ($conf["MostrarBotonABMDesactivado"]=="Si") { 
                   // El registro no cumple la condición para ejecutar la Accion Personalizada ?>
-                  <input class="blanco" type="button" name="AccPer<?= $i?>" value="<?= $aAcciones[$i]["Titulo"]?>">&nbsp;<? 
+                  <input class="blanco" type="button" name="AccPer<?php echo $i?>" value="<?php echo $aAcciones[$i]["Titulo"]?>">&nbsp;<?php  
                 } 
               } elseif ($conf["MostrarBotonABMDesactivado"]=="Si") { 
                 // El User no tiene permitido Acciones Personalizada en este módulo ?>
-                <input class="blanco" type="button" name="AccPer<?= $i?>" value="<?= $aAcciones[$i]["Titulo"]?>">&nbsp;<? 
+                <input class="blanco" type="button" name="AccPer<?php echo $i?>" value="<?php echo $aAcciones[$i]["Titulo"]?>">&nbsp;<?php 
               } 
             } 
           } 
         }
       } ?>
       </td>
-    <? } ?>
-    </tr><?
+    <?php } ?>
+    </tr><?php 
   }
 
-  mysql_free_result ($nResultado);?>
+  mysqli_free_result ($nResultado);?>
 
 </table>
 
@@ -671,7 +692,7 @@ if ( mysql_num_rows($nResultado)==0 ) {
 // -->
 </script>
 
-<?
+<?php 
 if (!isset($_GET["Desde"]) or $_GET["Desde"]!="Relacion") {
 
   // Variables para el Pie de Página
@@ -796,7 +817,7 @@ if (!isset($_GET["Desde"]) or $_GET["Desde"]!="Relacion") {
   <script language="JavaScript" type="text/javascript">
     parent.Pie.location.href="Pie.php";
   </script>
-  <?
+  <?php 
 
 }
 ?>

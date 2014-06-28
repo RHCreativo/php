@@ -72,7 +72,7 @@ $cCodigoPHP = "" ;
   $cSql = "SELECT "
         . "  CpoNombre, CpoEtiqueta, CpoTipo, CpoOpciones, CpoDependencias, CpoMaesEscl "
         . "FROM sysCambios "
-        . "WHERE ModNombre='" . $cModulo . "' AND CpoTipo<>'2L'  AND CpoTipo<>'hr' ".$cFilterFlds." ORDER BY CpoOrdenPpal, CpoOrdenSec" ;
+        . "WHERE ModNombre='" . $cModulo . "' AND CpoTipo<>'2L' ".$cFilterFlds." ORDER BY CpoOrdenPpal, CpoOrdenSec" ;
   $nResultado = mysql_query ($cSql) or fErrorSQL($conf["EstadoSitio"], "<br /><br /><b>Error en la consulta:</b><br />" . $cSql . "<br /><br /><b>Tipo de error:</b><br />" . mysql_error() . "<br />");
   $nIndiceCps = 0 ;
   while ($aRegistro = mysql_fetch_array($nResultado)) {

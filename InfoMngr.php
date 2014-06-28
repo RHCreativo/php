@@ -16,7 +16,6 @@ C	= Color
 E	= Email
 F	= Fecha
 H	= HTML
-hr	= Separador
 L	= Lista Desplegable
 LA	= 
 LE	= (lista esclavo)
@@ -25,6 +24,7 @@ M	= Memo
 N	= Numérico
 RH	= Radio Horizontal
 RV	= Radio Vertical
+S	= Separador (solo va _pref+Codigo y pone un separador)
 T 	= texto
 TR	= Textos Relacion    ------>  NO EN USO, TOMAR DE LA FAZENDA
 U 	= Upload
@@ -183,19 +183,13 @@ while($aRegistro = mysql_fetch_array($nResultado)) {
   }
   $cColorFte = "#000000" ;
 
-  if($aRegistro["CpoTipo"]=="hr"){ // es separador -> coloco la fila con celda doble y el hr dentro
+  // Escribimos la etiqueta
+  if ($cFilaNueva=="Si") {
     $cHTML .= "\t <tr height=\"25\"> \n";
-	$cHTML .= "\t\t <td colspan=\"2\" bgcolor=\"#929292\" > \n";
-  }else{
-	// Escribimos la etiqueta
-	if ($cFilaNueva=="Si") {
-	  $cHTML .= "\t <tr height=\"25\"> \n";
-	  $cHTML .= "\t\t <td width=\"180\" bgcolor=\"#929292\" align=\"right\" valign=\"top\"> \n";
-	}else{
-	  $cHTML .= "&nbsp;";
-	}
+    $cHTML .= "\t\t <td width=\"180\" bgcolor=\"#929292\" align=\"right\" valign=\"top\"> \n";
+  } else {
+    $cHTML .= "&nbsp;";
   }
-  
   // Controlamos si el campo es obligatorio
   if ($aRegistro["CpoRequerido"]=="S") {
     $cCpoReq = "S" ;
@@ -256,14 +250,9 @@ while($aRegistro = mysql_fetch_array($nResultado)) {
     if ($aRegistro["CpoToolTip"]) {
       $cHTML .= "\t\t\t <img src=\"Imagenes/icoToolTip.png\" align=\"left\" alt=\"\" title=\"\" onmouseover=\"showhint('" . str_replace("\r\n", "<br />", $aRegistro["CpoToolTip"]) . "', this, event, '200px')\" height=\"16\" width=\"16\"> \n" ;
     }
-    // SI ES SEPARADOR NO PONGO NADA DE ESTO
-	if($aRegistro["CpoTipo"]!="hr"){  //NO es separador
-		$cHTML .= "\t\t\t <b><font color=\"" . $cColorFte . "\">" . $aRegistro["CpoEtiqueta"] . ":<font></b>&nbsp; \n" ;
-    	$cHTML .= "\t\t </td> \n" ;
-    	$cHTML .= "\t\t <td width=\"540\" bgcolor=\"#D3D3D3\" valign=\"middle\"> \n" ;
-	}else{ //si es separador
-		$cHTML .= ($aRegistro["CpoEtiqueta"]!='')?"<div style=\"text-align:center; font-size:10px; font-weight:bold\">".$aRegistro["CpoEtiqueta"]."</div>":"";
-	}
+    $cHTML .= "\t\t\t <b><font color=\"" . $cColorFte . "\">" . $aRegistro["CpoEtiqueta"] . ":<font></b>&nbsp; \n" ;
+    $cHTML .= "\t\t </td> \n" ;
+    $cHTML .= "\t\t <td width=\"540\" bgcolor=\"#D3D3D3\" valign=\"middle\"> \n" ;
   } else {
     if ($aRegistro["CpoEtiqueta"]!='')
       $cHTML .= "&nbsp;<font color=\"" . $cColorFte . "\">" . $aRegistro["CpoEtiqueta"] . "<font>&nbsp;" ;
@@ -294,7 +283,7 @@ while($aRegistro = mysql_fetch_array($nResultado)) {
   } elseif ($aRegistro["CpoTipo"]=="M") {
     // Campo Memo
     $nAltoVentana += (20*$aRegistro["CpoAlto"]);
-    $cHTML .= "\t\t\t <textarea rows=\"" . $aRegistro["CpoAlto"] . "\" maxlength=\"" . $aRegistro["CpoAnchoTot"] . "\" cols=\"" . $aRegistro["CpoAnchoVis"] . "\" name=\"" . $aRegistro["CpoNombre"] . "\" " . $aRegistro["CpoAgregado"] . " onchange=\"setDirtyFlag();\">" . (isset($aCampo[$aRegistro["CpoNombre"]])?$aCampo[$aRegistro["CpoNombre"]]:"") . "</textarea> \n" ;
+    $cHTML .= "\t\t\t <textarea rows=\"" . $aRegistro["CpoAlto"] . "\" cols=\"" . $aRegistro["CpoAnchoVis"] . "\" name=\"" . $aRegistro["CpoNombre"] . "\" " . $aRegistro["CpoAgregado"] . " onchange=\"setDirtyFlag();\">" . (isset($aCampo[$aRegistro["CpoNombre"]])?$aCampo[$aRegistro["CpoNombre"]]:"") . "</textarea> \n" ;
 
   } elseif ($aRegistro["CpoTipo"]=="A") {
     // Campo Archivos
@@ -322,14 +311,23 @@ while($aRegistro = mysql_fetch_array($nResultado)) {
   } elseif ($aRegistro["CpoTipo"]=="H") {
     // Campo Memo en formato HTML
     $nAltoVentana += (10+$aRegistro["CpoAlto"]);
-	$cHTML .= "<textarea id=\"". $aRegistro["CpoNombre"] . "\" name=\"". $aRegistro["CpoNombre"] . "\">". (isset($aCampo[$aRegistro["CpoNombre"]])?(str_replace(chr(13).chr(10),"",$aCampo[$aRegistro["CpoNombre"]])):"") ."</textarea> \n";
-	$cHTML .= "<script type=\"text/javascript\"> \n" ;
-	$cHTML .= "		CKEDITOR.replace( '".$aRegistro["CpoNombre"]."')" ;
-	
-	$cHTML .= "</script> \n";
-	
-	$cJSCpoHTML .= "<script src=\"./ckeditor/ckeditor.js\"></script> \n" ;
-	
+    $cHTML .= "\t\t\t <script language=\"javascript\" type=\"text/javascript\"> \n" ;
+    $cHTML .= "\t\t\t\t <!-- \n" ;
+    $cHTML .= "\t\t\t\t var oFCKeditor = new FCKeditor( '" . $aRegistro["CpoNombre"] . "' ) ; \n" ;
+    $cHTML .= "\t\t\t\t oFCKeditor.BasePath = '".$conf['SubDir']."/Admin/FCKeditor/' ; \n" ;
+    $cHTML .= "\t\t\t\t oFCKeditor.Config[ 'SkinPath' ] = '".$conf['SubDir']."/Admin/FCKeditor/editor/skins/default/' ;  \n" ;
+    $cHTML .= "\t\t\t\t oFCKeditor.Config[ 'AutoDetectLanguage' ] = false ; \n" ;
+    $cHTML .= "\t\t\t\t oFCKeditor.Config[ 'DefaultLanguage' ] = 'es' ; \n" ;
+    $cHTML .= "\t\t\t\t oFCKeditor.Config[ 'LinkBrowserURL' ] = '".$conf['SubDir']."/Admin/FCKeditor/editor/filemanager/browser/default/browser.html?Connector=connectors/php/connector.php' ; \n" ;
+    $cHTML .= "\t\t\t\t oFCKeditor.Config[ 'ImageBrowserURL' ] = '".$conf['SubDir']."/Admin/FCKeditor/editor/filemanager/browser/default/browser.html?Type=Image&Connector=connectors/php/connector.php' ; \n" ;
+    $cHTML .= "\t\t\t\t oFCKeditor.Width = " . $aRegistro["CpoAnchoVis"] . " ; \n" ;
+    $cHTML .= "\t\t\t\t oFCKeditor.Height = " . $aRegistro["CpoAlto"] . " ; \n" ;
+    $cHTML .= "\t\t\t\t oFCKeditor.Value = '" . (isset($aCampo[$aRegistro["CpoNombre"]])?AddSlashes(str_replace(chr(13).chr(10),"",$aCampo[$aRegistro["CpoNombre"]])):"") . "' ; \n" ;
+    $cHTML .= "\t\t\t\t oFCKeditor.Create() ; \n" ;
+    $cHTML .= "\t\t\t\t //--> \n" ;
+    $cHTML .= "\t\t\t </script> \n" ;
+
+	$cJSCpoHTML .= "<script language=\"javascript\" type=\"text/javascript\" src=\"FCKeditor/fckeditor.js\"></script> \n" ;
 
   } elseif ($aRegistro["CpoTipo"]=="F") {
     // Campo Fecha
@@ -694,15 +692,12 @@ while($aRegistro = mysql_fetch_array($nResultado)) {
 	
 	$cHTML .= "\t\t\t <div id=\"colorpicker201\" class=\"colorpicker201\"></div><input type=\"button\" onclick=\"showColorGrid2('input_field_3','sample_3');\" value=\"Select\">&nbsp;<input type=\"text\" ID=\"input_field_3\" name=\"" . $aRegistro["CpoNombre"] . "\" size=\"" . $aRegistro["CpoAnchoVis"] . "\" maxlength=\"" . $aRegistro["CpoAnchoTot"] . "\" value=\"" . htmlentities((isset($aCampo[$aRegistro["CpoNombre"]])?$aCampo[$aRegistro["CpoNombre"]]:""), ENT_QUOTES, "UTF-8") . "\" " . $aRegistro["CpoAgregado"] . " onchange=\"setDirtyFlag();\">&nbsp;<input type=\"text\" ID=\"sample_3\" size=\"1\" value=\"\" style=\"background-color:" . htmlentities((isset($aCampo[$aRegistro["CpoNombre"]])?$aCampo[$aRegistro["CpoNombre"]]:""), ENT_QUOTES, "UTF-8") . "\"> \n";
 	
-  // ** -> FEDE - COLOR
+  // ** -> fin.FEDE - COLOR
 
   } else {
-	  
-	if($aRegistro["CpoTipo"]!="hr"){ //NO es separador
-    	// Asume campo de Texto Normal para cualquier otro caso
-    	$nAltoVentana += 30;
-    	$cHTML .= "\t\t\t <input type=\"text\" name=\"" . $aRegistro["CpoNombre"] . "\" size=\"" . $aRegistro["CpoAnchoVis"] . "\" maxlength=\"" . $aRegistro["CpoAnchoTot"] . "\" value=\"" . htmlentities((isset($aCampo[$aRegistro["CpoNombre"]])?$aCampo[$aRegistro["CpoNombre"]]:""), ENT_QUOTES, "UTF-8") . "\" " . $aRegistro["CpoAgregado"] . " onchange=\"setDirtyFlag();\"> \n" ;
-	}
+    // Asume campo de Texto Normal para cualquier otro caso
+    $nAltoVentana += 30;
+    $cHTML .= "\t\t\t <input type=\"text\" name=\"" . $aRegistro["CpoNombre"] . "\" size=\"" . $aRegistro["CpoAnchoVis"] . "\" maxlength=\"" . $aRegistro["CpoAnchoTot"] . "\" value=\"" . htmlentities((isset($aCampo[$aRegistro["CpoNombre"]])?$aCampo[$aRegistro["CpoNombre"]]:""), ENT_QUOTES, "UTF-8") . "\" " . $aRegistro["CpoAgregado"] . " onchange=\"setDirtyFlag();\"> \n" ;
 
   }
 
@@ -908,9 +903,8 @@ mysql_free_result ($nResultado) ;
     <td colspan="2" align="center">
       <input class="blanco" type="submit" name="botGrabar" value="<?= $cBotonSubmit ?>">
       <? if ($cAccion=="Modificar" and $_SESSION["gbl".$conf["VariablesSESSION"]."Duplic"]=="S" and $cnfPerAgregar=="S" and $_GET["Lang"]!="Si") { ?>
-      <input class="blanco" type="submit" name="botAgregar" value="<?= $txt['NuevoRegis']?>" onClick="document.Datos.Accion.value='Agregar'">&nbsp;
+        <input class="blanco" type="submit" name="botAgregar" value="<?= $txt['NuevoRegis']?>" onClick="document.Datos.Accion.value='Agregar'">&nbsp;
       <? } ?>
-      
     </td>
   </tr>
 <?
