@@ -1,10 +1,10 @@
-<?
+<?php
 /*
 ******************************************************************************
 * Administrador de Contenidos                                                *
 * -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-= *
 *                                                                            *
-* (C) 2002, Fabián Chesta                                                    *
+* (C) 2002, Federico Teiserskis                                              *
 *                                                                            *
 * Comentarios:                                                               *
 *                                                                            *
@@ -35,11 +35,11 @@ if ( $Alias!="" && $Clave!="" && $IdPagina!="" && $CodSeg!="" ) {
       // Arma la instrucción SQL y luego la ejecuta
       $cSql = "SELECT *, DATE_FORMAT(UsuUltLogin,'%d-%m-%Y %H:%i') as ccUltLogin FROM sysUsuarios WHERE UsuAlias='" . $Alias . "' AND UsuClave=MD5('" . $Clave . "')";
 
-      $nResultado = mysql_query ($cSql) or fErrorSQL($conf["EstadoSitio"], "<br /><br /><b>Error en la consulta:</b><br />" . $cSql . "<br /><br /><b>Tipo de error:</b><br />" . mysql_error() . "<br />");
+      $nResultado = $nConexion->query ($cSql) or fErrorSQL($conf["EstadoSitio"], "<br /><br /><b>Error en la consulta:</b><br />" . $cSql . "<br /><br /><b>Tipo de error:</b><br />" . mysqli_error($nConexion) . "<br />");
 
 
       // Verifica si el usuario es válido
-      if ( !mysql_num_rows($nResultado) ) {
+      if ( !($nResultado->num_rows) ) {
 
         $Mensaje = $txt['ErrorIngreso'];
 
@@ -48,17 +48,17 @@ if ( $Alias!="" && $Clave!="" && $IdPagina!="" && $CodSeg!="" ) {
               . "  (LogUser, LogStatus, LogIP, LogBrowser) "
               . " VALUES "
               . "  ('".$Alias."', 'Error', '".$_SERVER["REMOTE_ADDR"]."', '".$_SERVER["HTTP_USER_AGENT"]."')" ;
-        mysql_query ($cSql) or fErrorSQL($conf["EstadoSitio"], "<br /><br /><b>Error en la consulta:</b><br />" . $cSql . "<br /><br /><b>Tipo de error:</b><br />" . mysql_error() . "<br />");
+        $nConexion->query ($cSql) or fErrorSQL($conf["EstadoSitio"], "<br /><br /><b>Error en la consulta:</b><br />" . $cSql . "<br /><br /><b>Tipo de error:</b><br />" . mysqli_error($nConexion) . "<br />");
 
       } else {
 
-        $aRegistro = mysql_fetch_array($nResultado);
+        $aRegistro = $nResultado->fetch_object();
 
         $_SESSION["gbl".$conf["VariablesSESSION"]."IdPagina"]   = "";
-        $_SESSION["gbl".$conf["VariablesSESSION"]."Alias"]      = $aRegistro["UsuAlias"];
-        $_SESSION["gbl".$conf["VariablesSESSION"]."Nombre"]     = $aRegistro["UsuNombre"];
-        $_SESSION["gbl".$conf["VariablesSESSION"]."UltLogin"]   = $aRegistro["ccUltLogin"];
-        $_SESSION["gbl".$conf["VariablesSESSION"]."CntFiltros"] = $aRegistro["UsuCntFiltros"];
+        $_SESSION["gbl".$conf["VariablesSESSION"]."Alias"]      = $aRegistro->UsuAlias;
+        $_SESSION["gbl".$conf["VariablesSESSION"]."Nombre"]     = $aRegistro->UsuNombre;
+        $_SESSION["gbl".$conf["VariablesSESSION"]."UltLogin"]   = $aRegistro->ccUltLogin;
+        $_SESSION["gbl".$conf["VariablesSESSION"]."CntFiltros"] = $aRegistro->UsuCntFiltros;
         /*
         for ($nCampo=1; $nCampo<=mysql_num_fields($nResultado); $nCampo++) {
           if (substr(mysql_field_name($nResultado,$nCampo),0,3)=="ses") {
@@ -68,7 +68,7 @@ if ( $Alias!="" && $Clave!="" && $IdPagina!="" && $CodSeg!="" ) {
         */
         // Arma la instrucción SQL y luego la ejecuta
         $cSql = "UPDATE sysUsuarios SET UsuUltLogin=NOW() WHERE UsuAlias='" . $Alias . "'";
-        mysql_query ($cSql) or fErrorSQL($conf["EstadoSitio"], "<br /><br /><b>Error en la consulta:</b><br />" . $cSql . "<br /><br /><b>Tipo de error:</b><br />" . mysql_error() . "<br />");
+        $nConexion->query ($cSql) or fErrorSQL($conf["EstadoSitio"], "<br /><br /><b>Error en la consulta:</b><br />" . $cSql . "<br /><br /><b>Tipo de error:</b><br />" . mysqli_error($nConexion) . "<br />");
 
 
         // Datos del usuario que se loguea
@@ -76,12 +76,12 @@ if ( $Alias!="" && $Clave!="" && $IdPagina!="" && $CodSeg!="" ) {
               . "  (LogUser, LogStatus, LogIP, LogBrowser) "
               . " VALUES "
               . "  ('".$Alias."', 'Ok', '".$_SERVER["REMOTE_ADDR"]."', '".$_SERVER["HTTP_USER_AGENT"]."')" ;
-        mysql_query ($cSql) or fErrorSQL($conf["EstadoSitio"], "<br /><br /><b>Error en la consulta:</b><br />" . $cSql . "<br /><br /><b>Tipo de error:</b><br />" . mysql_error() . "<br />");
+        $nConexion->query ($cSql) or fErrorSQL($conf["EstadoSitio"], "<br /><br /><b>Error en la consulta:</b><br />" . $cSql . "<br /><br /><b>Tipo de error:</b><br />" . mysqli_error($nConexion) . "<br />");
 
 
         // Mantenimiento de la tabla sysLogins (guardo solo los ultimos 6 meses)
         $cSql = "DELETE FROM sysLogins WHERE LogTime < NOW()-INTERVAL 6 MONTH" ;
-        mysql_query ($cSql) or fErrorSQL($conf["EstadoSitio"], "<br /><br /><b>Error en la consulta:</b><br />" . $cSql . "<br /><br /><b>Tipo de error:</b><br />" . mysql_error() . "<br />");
+        $nConexion->query ($cSql) or fErrorSQL($conf["EstadoSitio"], "<br /><br /><b>Error en la consulta:</b><br />" . $cSql . "<br /><br /><b>Tipo de error:</b><br />" . mysqli_error($nConexion) . "<br />");
 
 
         header ("Location: Divide.php?Opcion=0");
@@ -90,7 +90,7 @@ if ( $Alias!="" && $Clave!="" && $IdPagina!="" && $CodSeg!="" ) {
       }
 
       // Cierra los Objetos de acceso a los datos y libera las variables
-      mysql_free_result ($nResultado);
+      mysqli_free_result ($nResultado);
 
     } else {
 
@@ -101,7 +101,7 @@ if ( $Alias!="" && $Clave!="" && $IdPagina!="" && $CodSeg!="" ) {
             . "  (LogUser, LogStatus, LogIP, LogBrowser) "
             . " VALUES "
             . "  ('".$Alias."', 'SecCode', '".$_SERVER["REMOTE_ADDR"]."', '".$_SERVER["HTTP_USER_AGENT"]."')" ;
-      mysql_query ($cSql) or fErrorSQL($conf["EstadoSitio"], "<br /><br /><b>Error en la consulta:</b><br />" . $cSql . "<br /><br /><b>Tipo de error:</b><br />" . mysql_error() . "<br />");
+      $nConexion->query ($cSql) or fErrorSQL($conf["EstadoSitio"], "<br /><br /><b>Error en la consulta:</b><br />" . $cSql . "<br /><br /><b>Tipo de error:</b><br />" . mysqli_error($nConexion) . "<br />");
 
     }
 
@@ -114,7 +114,7 @@ if ( $Alias!="" && $Clave!="" && $IdPagina!="" && $CodSeg!="" ) {
           . "  (LogUser, LogStatus, LogIP, LogBrowser) "
           . " VALUES "
           . "  ('".$Alias."', 'IdPagina', '".$_SERVER["REMOTE_ADDR"]."', '".$_SERVER["HTTP_USER_AGENT"]."')" ;
-    mysql_query ($cSql) or fErrorSQL($conf["EstadoSitio"], "<br /><br /><b>Error en la consulta:</b><br />" . $cSql . "<br /><br /><b>Tipo de error:</b><br />" . mysql_error() . "<br />");
+    $nConexion->query ($cSql) or fErrorSQL($conf["EstadoSitio"], "<br /><br /><b>Error en la consulta:</b><br />" . $cSql . "<br /><br /><b>Tipo de error:</b><br />" . mysqli_error($nConexion) . "<br />");
 
   }
 
