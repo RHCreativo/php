@@ -1,10 +1,10 @@
-<?
+<?php
 /*
 ******************************************************************************
 * Administrador de Contenidos                                                *
 * -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-= *
 *                                                                            *
-* (C) 2002, Fabián Chesta                                                    *
+* (C) 2002, Federico Teiserskis                                              *
 *                                                                            *
 * Comentarios:                                                               *
 *                                                                            *
@@ -22,7 +22,7 @@ if ($_SESSION["gbl".$conf["VariablesSESSION"]."Alias"]=="") {
 }
 ?>
 
-<? if ($_GET["Opcion"]==0) {       /* División desde el ingreso */
+<?php if ($_GET["Opcion"]==0) {       /* División desde el ingreso */
   // Variables para el Pie de Página
   // ===============================
   $_SESSION["pdpIrA"]        = "" ;
@@ -49,13 +49,13 @@ if ($_SESSION["gbl".$conf["VariablesSESSION"]."Alias"]=="") {
   // Arma la instrucción SQL y luego la ejecuta
   $cSql = "SELECT FLOOR(MIN(ModOrden)/100)+1 AS nNroPriLin, FLOOR(MAX(ModOrden)/100)+1 AS nNroUltLin FROM sysModulos INNER JOIN sysModUsu ON sysModulos.ModNombre=sysModUsu.ModNombre WHERE UsuAlias='" . $_SESSION["gbl".$conf["VariablesSESSION"]."Alias"] . "' AND PerVer='S'";
 
-  $nResultado = mysql_query ($cSql) or fErrorSQL($conf["EstadoSitio"], "<br /><br /><b>Error en la consulta:</b><br />" . $cSql . "<br /><br /><b>Tipo de error:</b><br />" . mysql_error() . "<br />");
+  $nResultado = $nConexion->query ($cSql) or fErrorSQL($conf["EstadoSitio"], "<br /><br /><b>Error en la consulta:</b><br />" . $cSql . "<br /><br /><b>Tipo de error:</b><br />" . mysqli_error($nConexion) . "<br />");
+  
+  $aRegistro = $nResultado->fetch_object();
 
-  $aRegistro = mysql_fetch_array($nResultado);
+  $nCntLinMenu = $aRegistro->nNroUltLin-$aRegistro->nNroPriLin+1 ;
 
-  $nCntLinMenu = $aRegistro["nNroUltLin"]-$aRegistro["nNroPriLin"]+1 ;
-
-  mysql_free_result ($nResultado) ;
+  mysqli_free_result ($nResultado) ;
   ?>
   <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Frameset//EN"
       "http://www.w3.org/TR/html4/frameset.dtd">
@@ -70,7 +70,7 @@ if ($_SESSION["gbl".$conf["VariablesSESSION"]."Alias"]=="") {
   </frameset>
   </html>
 
-<? } elseif ($_GET["Opcion"]==1) { /* División desde el menu principal */ 
+<?php } elseif ($_GET["Opcion"]==1) { /* División desde el menu principal */ 
   $_SESSION["gbl".$conf["VariablesSESSION"]."Modulo"] = $_GET["Modulo"];
   $_SESSION["gbl".$conf["VariablesSESSION"]."Tipo"]   = $_GET["Tipo"];
   $_SESSION["gbl".$conf["VariablesSESSION"]."Duplic"] = $_GET["Duplic"]; ?>
@@ -87,7 +87,7 @@ if ($_SESSION["gbl".$conf["VariablesSESSION"]."Alias"]=="") {
   </frameset>
   </html>
 
-<? } elseif ($_GET["Opcion"]==2) { /* División para más información */ ?>
+<?php } elseif ($_GET["Opcion"]==2) { /* División para más información */ ?>
   <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Frameset//EN"
       "http://www.w3.org/TR/html4/frameset.dtd">
   <html>
@@ -101,7 +101,7 @@ if ($_SESSION["gbl".$conf["VariablesSESSION"]."Alias"]=="") {
   </frameset>
   </html>
 
-<? } elseif ($_GET["Opcion"]==3) { /* Pie de la pantalla de más información e información relacionada*/ ?>
+<?php } elseif ($_GET["Opcion"]==3) { /* Pie de la pantalla de más información e información relacionada*/ ?>
   <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
       "http://www.w3.org/TR/html4/loose.dtd">
   <html>
@@ -124,7 +124,7 @@ if ($_SESSION["gbl".$conf["VariablesSESSION"]."Alias"]=="") {
   </body>
   </html>
 
-<? } elseif ($_GET["Opcion"]==4) { /* Pantalla inicial */ ?>
+<?php } elseif ($_GET["Opcion"]==4) { /* Pantalla inicial */ ?>
   <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
       "http://www.w3.org/TR/html4/loose.dtd">
   <html>
@@ -150,7 +150,7 @@ if ($_SESSION["gbl".$conf["VariablesSESSION"]."Alias"]=="") {
   </body>
   </html>
 
-<? } elseif ($_GET["Opcion"]==5) { /* División para información relacionada */ ?>
+<?php } elseif ($_GET["Opcion"]==5) { /* División para información relacionada */ ?>
   <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Frameset//EN"
       "http://www.w3.org/TR/html4/frameset.dtd">
   <html>
@@ -164,7 +164,7 @@ if ($_SESSION["gbl".$conf["VariablesSESSION"]."Alias"]=="") {
   </frameset>
   </html>
 
-<? } elseif ($_GET["Opcion"]==6) { /* División para acciones personalizadas a nivel de registro */ ?>
+<?php } elseif ($_GET["Opcion"]==6) { /* División para acciones personalizadas a nivel de registro */ ?>
   <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Frameset//EN"
       "http://www.w3.org/TR/html4/frameset.dtd">
   <html>
@@ -178,4 +178,4 @@ if ($_SESSION["gbl".$conf["VariablesSESSION"]."Alias"]=="") {
   </frameset>
   </html>
 
-<? } ?>
+<?php } ?>
